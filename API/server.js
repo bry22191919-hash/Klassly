@@ -2,10 +2,29 @@ const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const db = require("./tables");
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// ensure uploads folder exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, unique + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ storage });
 
 app.post("/api/register", (req, res) => {
   const  {name, email, password, role} = req.body;
@@ -37,6 +56,42 @@ app.post("/api/login", (req, res) => {
     }
 
     res.json({ message: "Login success", user });
+  });
+});
+
+
+// Create assignment endpoint (multipart/form-data with optional file)
+app.post('/api/assignments', upload.single('file'), (req, res) => {
+  const { title, description, dueDate, points, classId } = req.body;
+  if (!title || !description || !dueDate || !points || !classId) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const filePath = req.file ? path.relative(process.cwd(), req.file.path) : null;
+
+  const query = `INSERT INTO assignments (title, description, due_date, points, class_id, file_path) VALUES (?, ?, ?, ?, ?, ?)`;
+  db.run(query, [title, description, dueDate, points, classId, filePath], function (err) {
+    if (err) {
+      console.error('DB error inserting assignment:', err);
+      return res.status(500).json({ error: 'Failed to create assignment' });
+    }
+
+    res.json({ message: 'Assignment created', id: this.lastID });
+  });
+});
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// List assignments (GET) so the endpoint can be visited from a browser
+app.get('/api/assignments', (req, res) => {
+  const query = `SELECT id, title, description, due_date as dueDate, points, class_id as classId, file_path as filePath FROM assignments ORDER BY id DESC`;
+  db.all(query, [], (err, rows) => {
+    if (err) {
+      console.error('DB error fetching assignments:', err);
+      return res.status(500).json({ error: 'Failed to fetch assignments' });
+    }
+    res.json(rows);
   });
 });
 
