@@ -4,8 +4,8 @@ import './App.css'
 import Login from './Pages/LogIn.jsx'
 import SignUp from './Pages/SignUp.jsx'
 import Dashboard from './Pages/Dashboard.jsx'
-import AssignmentForm from './Pages/AssignmentForm.jsx
-import SignUp from './Pages/SignUp.jsx
+import AssignmentForm from './Pages/AssignmentForm.jsx'
+import SignUp from './Pages/SignUp.jsx'
 import Dashboard from './Pages/Dashboard.jsx'
 import AssignmentForm from './Pages/AssignmentForm.jsx'
 
