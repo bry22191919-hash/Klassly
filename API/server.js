@@ -59,6 +59,21 @@ app.post("/api/login", (req, res) => {
   });
 });
 
+app.get("/api/classes/:userId", (req, res) => {
+  const userId = req.params.userId;
+
+  const query = `
+    SELECT * FROM classes
+    WHERE teacher_id = ?
+    OR id IN (SELECT class_id FROM class_students WHERE student_id = ?)`;
+
+  db.all(query, [userId, userId], (err, rows) => {
+    if (err) return res.status(400).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+
 
 // Create assignment endpoint (multipart/form-data with optional file)
 app.post('/api/assignments', upload.single('file'), (req, res) => {
