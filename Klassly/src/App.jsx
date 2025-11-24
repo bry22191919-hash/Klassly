@@ -5,7 +5,7 @@ import Login from './Pages/LogIn.jsx'
 import SignUp from './Pages/SignUp.jsx'
 import Dashboard from './Pages/Dashboard.jsx'
 import AssignmentForm from './Pages/AssignmentForm.jsx'
-import CreateClass from './Pages/CreateClass.jsx'
+
 
 
 function App() {
