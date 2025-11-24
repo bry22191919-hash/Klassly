@@ -59,7 +59,7 @@ app.post("/api/login", (req, res) => {
   });
 });
 
-app.get("/api/classes/:userId", (req, res) => {
+app.get("/api/dashboard/:userId", (req, res) => {
   const userId = req.params.userId;
 
   const query = `
@@ -73,6 +73,25 @@ app.get("/api/classes/:userId", (req, res) => {
   });
 });
 
+app.post("/api/classes", (req, res) => {
+  const {name, subject, teacher_id, class_code } = req.body;
+
+  const query = `INSERT INTO classes (name, subject, teacher_id, class_code) VALUES (?, ?, ?, ?)`;
+  db.run(query, [name, subject, teacher_id, class_code], function (err) {
+    if (err) {
+      console.error("SQLite Error:", err);
+      console.log({ name, subject, teacher_id, class_code });  // 👈 ADD THIS
+
+      return res.status(400).json({error: "something went wrong."});
+    } else {
+      console.log("Class created");
+      res.json({
+        message: "Class successfully created",
+        class_id: this.lastID
+      });
+    }
+  });
+});
 
 
 // Create assignment endpoint (multipart/form-data with optional file)
