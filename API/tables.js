@@ -14,10 +14,10 @@ db.serialize(() => {
         )`);
 
     db.run(`
-        CREATE TABLE IF NOT EXISTS class(
+        CREATE TABLE IF NOT EXISTS classes(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
-        description TEXT,
+        subject TEXT,
         teacher_id INTEGER,
         class_code TEXT,
         FOREIGN KEY (teacher_id) REFERENCES users(id)

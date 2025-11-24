@@ -13,7 +13,7 @@ const Dashboard = () => {
         const fetchClass = async () => {
             if (!userId) return;
             try {
-                const res = await axios.get(`http://localhost:3001/api/classes/${userId}`);
+                const res = await axios.get(`http://localhost:3001/api/dashboard/${userId}`);
                 setClasses(res.data);
             } catch (err) {
                 console.error("Failed to fetch classes", err);

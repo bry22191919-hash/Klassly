@@ -23,7 +23,8 @@ const Login = () => {
             const data = await response.json();
 
             if (response.ok) {
-                localStorage.setItem('user', JSON.stringify(data));
+                localStorage.setItem('id', data.user.id);
+                localStorage.setItem('role', data.user.role);
                 navigate('/dashboard');
             } else {
                 setError(data.error || 'Invalid Email or Password');
