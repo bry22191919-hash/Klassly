@@ -26,7 +26,7 @@ const CreateClass = () => {
         const class_code = uuidv4().split('-')[0].toUpperCase();
 
         try {
-            await axios.post("http://localhost:3001/api/classes", {
+            await axios.post("http://localhost:3001/api/create-classes", {
                 name,
                 subject,
                 teacher_id,
