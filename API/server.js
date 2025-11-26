@@ -12,20 +12,9 @@ app.use(express.json());
 
 // ensure uploads folder exists
 const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, unique + '-' + file.originalname);
-  }
-});
-
 const upload = multer({ storage });
 
+//Authentication
 app.post("/api/register", (req, res) => {
   const  {name, email, password, role} = req.body;
   const hashed = bcrypt.hashSync(password, 10);
@@ -49,8 +38,14 @@ app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
 
   db.get(`SELECT * FROM users WHERE email = ?`, [email], (err, user) => {
-    if (!user) return res.status(400).json({ error: "User not found" });
 
+    if (err){
+      console.error("Database error:", err);
+      return res.status(500).json({error: "Internal server error"});
+    } 
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
     if (!bcrypt.compareSync(password, user.password)) {
       return res.status(400).json({ error: "Wrong password" });
     }
@@ -59,7 +54,8 @@ app.post("/api/login", (req, res) => {
   });
 });
 
-app.get("/api/classes/:userId", (req, res) => {
+//displays the classes
+app.get("/api/dashboard/:userId", (req, res) => {
   const userId = req.params.userId;
 
   const query = `
@@ -73,7 +69,43 @@ app.get("/api/classes/:userId", (req, res) => {
   });
 });
 
+//teacher creation of classes
+app.post("/api/create-classes", (req, res) => {
+  const {name, subject, teacher_id, class_code } = req.body;
 
+  const query = `INSERT INTO classes (name, subject, teacher_id, class_code) VALUES (?, ?, ?, ?)`;
+  db.run(query, [name, subject, teacher_id, class_code], function (err) {
+    if (err) {
+      console.error("SQLite Error:", err);
+      console.log({ name, subject, teacher_id, class_code });
+
+      return res.status(400).json({error: "something went wrong."});
+    } else {
+      console.log("Class created");
+      res.json({
+        message: "Class successfully created",
+        class_id: this.lastID
+      });
+    }
+  });
+});
+
+//student joining to a class
+app.post("/api/join-class", (req, res) => {
+  const {class_code} = req.body;
+
+  db.get(`SELECT * FROM classes WHERE class_code = ?`, [class_code], (err, code) => {
+    
+    if (err) {
+      console.error("Something went wrong:", err);
+      return res.status(500).json({ error: "Internal server error"});
+    }
+    if (!code) {
+      return res.status(400).json({ error: "Class Code ERROR!"});
+    }
+      res.json({ message: "Welcome", class: code});
+  });
+});
 
 // Create assignment endpoint (multipart/form-data with optional file)
 app.post('/api/assignments', upload.single('file'), (req, res) => {
@@ -110,6 +142,17 @@ app.get('/api/assignments', (req, res) => {
   });
 });
 
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, unique + '-' + file.originalname);
+  }
+});
 
 
 
