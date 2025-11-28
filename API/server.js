@@ -10,9 +10,32 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ensure uploads folder exists
+// --- FIX START ---
+// All multer-related setup is now at the top, in the correct order.
+
+// 1. Define the upload directory path
 const uploadDir = path.join(__dirname, 'uploads');
+
+// 2. Ensure the 'uploads' directory exists before we try to use it
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// 3. Define the storage engine for multer
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, unique + '-' + file.originalname);
+  }
+});
+
+// 4. Now you can create the 'upload' middleware using the 'storage' object
 const upload = multer({ storage });
+// --- FIX END ---
+
 
 //Authentication
 app.post("/api/register", (req, res) => {
@@ -141,19 +164,6 @@ app.get('/api/assignments', (req, res) => {
     res.json(rows);
   });
 });
-
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, unique + '-' + file.originalname);
-  }
-});
-
 
 
 app.listen(3001, () => console.log("Running on http://localhost:3001"));
