@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState } from "react"
+import { useNavigate, Link } from "react-router-dom"
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -23,15 +23,15 @@ const Login = () => {
             const data = await response.json();
 
             if (response.ok) {
-                // --- UPDATES ARE HERE ---
-                // Store user information for other components (like TestPage) to use.
-                // We assume your backend response includes user.id, user.name, and user.role.
-                localStorage.setItem('userId', data.user.id);       // Changed from 'id' to 'userId' for consistency
-                localStorage.setItem('userName', data.user.name);   // Added to store the user's name
-                localStorage.setItem('role', data.user.role);
-                // --- END OF UPDATES ---
-
-                navigate('/dashboard');
+                // Backend returns { message, user }
+                const user = data.user || data;
+                // Keep the original user object for other parts of the app
+                localStorage.setItem('user', JSON.stringify(user));
+                // Also set specific keys other components expect
+                localStorage.setItem('userId', String(user.id || user.user_id || ''));
+                localStorage.setItem('userName', user.name || user.username || '');
+                localStorage.setItem('role', user.role || '');
+                navigate('/home');
             } else {
                 setError(data.error || 'Invalid Email or Password');
             }

@@ -18,11 +18,16 @@ const Dashboard = () => {
                 return; // Stop here if we found local classes
             }
 
-            // If no local classes, fetch from the API as before
-            if (!userId) return;
+            // Fetch classes from the API
             try {
-                const res = await axios.get(`http://localhost:3001/api/dashboard/${userId}`);
-                setClasses(res.data);
+                const res = await axios.get('http://localhost:3001/api/classes');
+                let data = res.data || [];
+                // If teacher, show only classes they teach
+                if (role === 'teacher' && userId) {
+                    data = data.filter(c => Number(c.teacherId) === Number(userId));
+                }
+                // For students we currently show all classes (or you can filter by membership later)
+                setClasses(data);
             } catch (err) {
                 console.error("Failed to fetch classes from API", err);
             }

@@ -14,10 +14,10 @@ db.serialize(() => {
         )`);
 
     db.run(`
-        CREATE TABLE IF NOT EXISTS classes(
+        CREATE TABLE IF NOT EXISTS class(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
-        subject TEXT,
+        description TEXT,
         teacher_id INTEGER,
         class_code TEXT,
         FOREIGN KEY (teacher_id) REFERENCES users(id)
@@ -86,6 +86,29 @@ db.serialize(() => {
             db.run("ALTER TABLE assignments ADD COLUMN file_path TEXT", (aErr) => {
                 if (aErr) console.error('Failed to add file_path column to assignments:', aErr);
                 else console.log('Added file_path column to assignments table');
+            });
+        }
+    });
+});
+
+// Migration: ensure `text` and `created_at` columns exist on submission table
+db.serialize(() => {
+    db.all("PRAGMA table_info(submission)", [], (err, rows) => {
+        if (err) {
+            console.error('Error reading submission table info:', err);
+            return;
+        }
+        const cols = rows.map(r => r.name);
+        if (!cols.includes('text')) {
+            db.run("ALTER TABLE submission ADD COLUMN text TEXT", (aErr) => {
+                if (aErr) console.error('Failed to add text column to submission:', aErr);
+                else console.log('Added text column to submission table');
+            });
+        }
+        if (!cols.includes('created_at')) {
+            db.run("ALTER TABLE submission ADD COLUMN created_at TEXT", (aErr) => {
+                if (aErr) console.error('Failed to add created_at column to submission:', aErr);
+                else console.log('Added created_at column to submission table');
             });
         }
     });
