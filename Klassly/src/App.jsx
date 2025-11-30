@@ -22,8 +22,12 @@ function App() {
       <Route path="/dashboard" element={<Dashboard/>}/>
       <Route path="/assignments/new" element={<AssignmentForm/>}/>
       <Route path="/create-class" element={<CreateClass/>}/>
+<<<<<<< HEAD
+      <Route path="/join-class" element={<JoinClass/>}/>
+=======
       <Route path="/join-class" element={<JoinClass/>} />
 
+>>>>>>> c41a13d513ea61b3269ff5def21828410eb14ddb
     </Routes>
    </Router>
   )

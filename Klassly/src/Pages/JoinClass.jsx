@@ -10,20 +10,25 @@ const JoinClass = () => {
     e.preventDefault();
     setError("");
 
+    const storedId = localStorage.getItem("userId") ?? localStorage.getItem("id");
+    const student_id = storedId ? Number(storedId) : null;
+    if (!student_id) {
+      setError("You must be logged in to join a class.");
+      return;
+    }
+
     try {
       const response = await fetch("http://localhost:3001/api/join-class", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ class_code: classCode })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ class_code: classCode, student_id })
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        console.log("Joining Class...");
-        navigate("/dashboard"); // redirect to dashboard
+        console.log("Joined class:", data);
+        navigate("/dashboard");
       } else {
         setError(data.error || "Invalid class code.");
       }
@@ -42,23 +47,14 @@ const JoinClass = () => {
           placeholder="Enter class code"
           value={classCode}
           onChange={(e) => setClassCode(e.target.value)}
-          style={{
-            padding: "10px",
-            width: "200px",
-            marginRight: "10px",
-          }}
+          style={{ padding: "10px", width: "200px", marginRight: "10px" }}
+          required
         />
 
-        <button type="submit">
-          Join Class
-        </button>
+        <button type="submit">Join Class</button>
       </form>
 
-      {error && (
-        <p style={{ color: "red", marginTop: "10px" }}>
-          {error}
-        </p>
-      )}
+      {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
     </div>
   );
 };

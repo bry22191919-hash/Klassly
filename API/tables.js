@@ -32,7 +32,7 @@ db.serialize(() => {
         points INTEGER DEFAULT 0,
         class_id INTEGER,
         file_path TEXT,
-        FOREIGN KEY (class_id) REFERENCES class(id)
+        FOREIGN KEY (class_id) REFERENCES classes(id)
         )`);
 
     db.run(`
@@ -52,7 +52,7 @@ db.serialize(() => {
         class_id INTEGER,
         user_id INTEGER,
         content TEXT,
-        FOREIGN KEY (class_id) REFERENCES class(id),
+        FOREIGN KEY (class_id) REFERENCES classes(id),
         FOREIGN KEY (user_id) REFERENCES users(id)
         )`);
 
@@ -61,7 +61,7 @@ db.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         class_id INTEGER,
         student_id INTEGER,
-        FOREIGN KEY (class_id) REFERENCES class(id),
+        FOREIGN KEY (class_id) REFERENCES classes(id),
         FOREIGN KEY (student_id) REFERENCES users(id)
         )`)
 });

@@ -6,7 +6,9 @@ const CreateClass = () => {
     const [name, setClassName] = useState('');
     const [subject, setSubject] = useState('');
 
-    const teacher_id = localStorage.getItem("id");
+    // use either 'userId' or legacy 'id'
+    const storedId = localStorage.getItem("userId") ?? localStorage.getItem("id");
+    const teacher_id = storedId ? Number(storedId) : null;
     const role = localStorage.getItem("role");
 
     useEffect(() => {
@@ -29,7 +31,7 @@ const CreateClass = () => {
             await axios.post("http://localhost:3001/api/create-classes", {
                 name,
                 subject,
-                teacher_id,
+                teacher_id, // already Number or null
                 class_code
             });
 

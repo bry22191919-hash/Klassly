@@ -10,9 +10,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// =====================
-// Uploads configuration
-// =====================
 
 // Ensure uploads folder exists
 const uploadDir = path.join(__dirname, 'uploads');
@@ -32,17 +29,17 @@ const storage = multer.diskStorage({
 // Initialize multer
 const upload = multer({ storage });
 
-//authentication 
+// Authentication Routes
 app.post("/api/register", (req, res) => {
   const { name, email, password, role } = req.body;
-  //ensures all fields are filled
+
   if (!name || !email || !password || !role) {
     return res.status(400).send('Fill out all requirements');
   }
 
   const hashed = bcrypt.hashSync(password, 10);
   const query = `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`;
-  //run the query that inserts the inputs to the db
+
   db.run(query, [name, email, hashed, role], function(err) {
     if (err) return res.status(400).json({ error: "Email already exists" });
     console.log("Registered successfully");
@@ -70,23 +67,33 @@ app.post("/api/login", (req, res) => {
   });
 });
 
-//home where u can see  your classes
+
+//home
 app.get("/api/dashboard/:userId", (req, res) => {
   const userId = req.params.userId;
-  //show joined classes, using either teacher or student id 
+
   const query = `
-    SELECT * FROM classes
-    WHERE teacher_id = ?
-    OR id IN (SELECT class_id FROM class_students WHERE student_id = ?)
+    SELECT
+      classes.id,
+      classes.name,
+      classes.subject,
+      classes.teacher_id,
+      classes.class_code,
+      u.name AS teacher_name
+    FROM classes
+    LEFT JOIN users u ON classes.teacher_id = u.id
+    WHERE classes.teacher_id = ?
+      OR classes.id IN (SELECT class_id FROM class_students WHERE student_id = ?)
   `;
 
   db.all(query, [userId, userId], (err, rows) => {
     if (err) return res.status(400).json({ error: err.message });
-    res.json(rows);
+    console.log("Dashboard classes:", rows);
+    res.json(rows || []);
   });
 });
 
-//teacher creation of classes
+
 app.post("/api/create-classes", (req, res) => {
   const { name, subject, teacher_id, class_code } = req.body;
 
@@ -104,19 +111,36 @@ app.post("/api/create-classes", (req, res) => {
   });
 });
 
-//student joining a class
+//student joins class
 app.post("/api/join-class", (req, res) => {
-  const { class_code } = req.body;
+  const { class_code: rawClassCode, student_id } = req.body;
+  const class_code = rawClassCode.trim(); 
 
-  db.get(`SELECT * FROM classes WHERE class_code = ?`, [class_code], (err, code) => {
-    if (err) {
-      console.error("Something went wrong:", err);
-      return res.status(500).json({ error: "Internal server error" });
+  db.get(
+    `SELECT * FROM classes WHERE UPPER(class_code) = UPPER(?)`, [class_code], (err, code) => {
+
+      if (err) {
+        console.error("Something went wrong:", err);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+
+      if (!code) return res.status(400).json({ error: "Class Code ERROR!" });
+
+      //insert student into class_students table
+      const insertQuery = `INSERT INTO class_students (class_id, student_id) VALUES (?, ?)`;
+
+      db.run(insertQuery, [code.id, student_id], function (err) {
+        if (err) {
+          console.error("Error joining class:", err);
+          return res.status(400).json({ error: "Already joined or error occurred" });
+        }
+
+        res.json({ message: "Successfully joined class", class: code });
+      });
     }
-    if (!code) return res.status(400).json({ error: "Class Code ERROR!" });
-    res.json({ message: "Welcome", class: code });
-  });
+  );
 });
+
 
 // Assignments Routes
 // Create assignment (with optional file upload)
@@ -159,6 +183,5 @@ app.get('/api/assignments', (req, res) => {
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 
 app.listen(3001, () => console.log("Running on http://localhost:3001"));
