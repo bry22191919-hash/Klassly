@@ -1,87 +1,80 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { v4 as uuidv4 } from 'uuid';
 
 const CreateClass = () => {
-  const navigate = useNavigate();
-  const [className, setClassName] = useState('');
-  const [subject, setSubject] = useState('');
-  const [section, setSection] = useState('');
-  const [teacherName, setTeacherName] = useState('');
+    const [name, setClassName] = useState('');
+    const [subject, setSubject] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Get existing classes from localStorage or start with an empty array
-    const existingClasses = JSON.parse(localStorage.getItem('classes')) || [];
+    // use either 'userId' or legacy 'id'
+    const storedId = localStorage.getItem("userId") ?? localStorage.getItem("id");
+    const teacher_id = storedId ? Number(storedId) : null;
+    const role = localStorage.getItem("role");
 
-    // Create the new class object
-    const newClass = {
-      id: Date.now(), // Simple unique ID
-      name: className,
-      subject: subject,
-      section: section,
-      teacherName: teacherName,
+    useEffect(() => {
+        if (role !== "teacher") {
+            alert("Only teachers can create classes!");
+        }
+    }, [role]);
+
+    const HandleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (role !== "teacher") {
+            alert("You are not allowed to create a class.");
+            return;
+        }
+
+        const class_code = uuidv4().split('-')[0].toUpperCase();
+
+        try {
+            await axios.post("http://localhost:3001/api/create-classes", {
+                name,
+                subject,
+                teacher_id, // already Number or null
+                class_code
+            });
+
+            alert(`Class created successfully! Class code: ${class_code}`);
+            setClassName('');
+            setSubject('');
+        } catch (err) {
+            console.error(err);
+            alert("Creation of class has failed.");
+        }
     };
 
-    // Save the updated list of classes back to localStorage
-    localStorage.setItem('classes', JSON.stringify([...existingClasses, newClass]));
+    return (
+        <div style={{ padding: "20px" }}>
+            <h2>Create a Class</h2>
 
-    // Redirect to the dashboard
-    navigate('/dashboard');
-  };
+            <form onSubmit={HandleSubmit}>
+                <div>
+                    <label>Class Name</label>
+                    <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setClassName(e.target.value)}
+                        placeholder="Enter class name."
+                    />
+                </div>
 
-  return (
-    <div style={{ padding: "20px", maxWidth: "500px", margin: "auto" }}>
-      <h2>Create a New Class</h2>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label>Class Name</label>
-          <input
-            type="text"
-            value={className}
-            onChange={(e) => setClassName(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-          />
+                <div style={{ padding: "10px" }}>
+                    <label>Subject</label>
+                    <input
+                        type="text"
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        placeholder="Enter subject"
+                    />
+
+                    <button type="submit" style={{ marginTop: "10px" }}>
+                        Create Class
+                    </button>
+                </div>
+            </form>
         </div>
-
-        <div style={{ marginBottom: '15px' }}>
-          <label>Subject</label>
-          <input
-            type="text"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '15px' }}>
-          <label>Section</label>
-          <input
-            type="text"
-            value={section}
-            onChange={(e) => setSection(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-          />
-        </div>
-        
-        <div style={{ marginBottom: '15px' }}>
-          <label>Teacher Name</label>
-          <input
-            type="text"
-            value={teacherName}
-            onChange={(e) => setTeacherName(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-          />
-        </div>
-
-        <button type="submit" className="user-btn">Create Class</button>
-      </form>
-    </div>
-  );
-};
+    );
+}
 
 export default CreateClass;
