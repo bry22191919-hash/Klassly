@@ -7,6 +7,7 @@ import Dashboard from './Pages/Dashboard.jsx'
 import AssignmentForm from './Pages/AssignmentForm.jsx'
 import CreateClass from './Pages/CreateClass.jsx'
 import JoinClass from './Pages/JoinClass.jsx'
+import ClassPage from './Pages/ClassPage.jsx'
 
 
 
@@ -23,6 +24,7 @@ function App() {
       <Route path="/assignments/new" element={<AssignmentForm/>}/>
       <Route path="/create-class" element={<CreateClass/>}/>
       <Route path="/join-class" element={<JoinClass/>}/>
+      <Route path="/class/:id" element={<ClassPage />} />
     </Routes>
    </Router>
   )

@@ -141,6 +141,138 @@ app.post("/api/join-class", (req, res) => {
   );
 });
 
+// Get a single class by ID
+app.get('/api/class/:id', (req, res) => {
+  const classId = req.params.id;
+
+  const query = `
+    SELECT c.*, u.name as teacher_name
+    FROM classes c
+    LEFT JOIN users u ON c.teacher_id = u.id
+    WHERE c.id = ?
+  `;
+
+  db.get(query, [classId], (err, classInfo) => {
+    if (err) {
+      console.error("DB error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    if (!classInfo) {
+      return res.status(404).json({ error: "Class not found" });
+    }
+    res.json(classInfo);
+  });
+});
+
+
+app.get('/api/class/:id/members', (req, res) => {
+  const classId = req.params.id;
+  const query = `
+    SELECT u.id AS user_id, u.name
+    FROM class_students cs
+    LEFT JOIN users u ON cs.student_id = u.id
+    WHERE cs.class_id = ?
+  `;
+  db.all(query, [classId], (err, rows) => {
+    if (err) return res.status(500).json({ error: "DB error" });
+    res.json(rows);
+  });
+});
+
+// Get all posts for a class with their comments
+app.get('/api/class/:id/posts', (req, res) => {
+  const classId = req.params.id;
+
+  const query = `
+    SELECT 
+      p.id AS post_id, p.user_id AS post_user_id, u.name AS post_user_name, p.content AS post_content, p.created_at AS post_created_at,
+      c.id AS comment_id, c.user_id AS comment_user_id, cu.name AS comment_user_name, c.content AS comment_content, c.parent_comment_id, c.created_at AS comment_created_at
+    FROM post p
+    LEFT JOIN users u ON p.user_id = u.id
+    LEFT JOIN comments c ON c.post_id = p.id
+    LEFT JOIN users cu ON c.user_id = cu.id
+    WHERE p.class_id = ?
+    ORDER BY p.created_at DESC, c.created_at ASC
+  `;
+
+  db.all(query, [classId], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    const posts = {};
+
+    rows.forEach(row => {
+      if (!posts[row.post_id]) {
+        posts[row.post_id] = {
+          id: row.post_id,
+          user_id: row.post_user_id,
+          user_name: row.post_user_name,
+          content: row.post_content,
+          created_at: row.post_created_at,
+          comments: []
+        };
+      }
+
+      if (row.comment_id) {
+        posts[row.post_id].comments.push({
+          id: row.comment_id,
+          user_id: row.comment_user_id,
+          user_name: row.comment_user_name,
+          content: row.comment_content,
+          parent_comment_id: row.parent_comment_id,
+          created_at: row.comment_created_at
+        });
+      }
+    });
+
+    res.json(Object.values(posts));
+  });
+});
+
+// Create a new post
+app.post('/api/class/:id/posts', (req, res) => {
+  const classId = req.params.id;
+  const { user_id, content } = req.body;
+
+  db.run(
+    `INSERT INTO post (class_id, user_id, content) VALUES (?, ?, ?)`,
+    [classId, user_id, content],
+    function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ 
+        id: this.lastID, 
+        class_id: classId, 
+        user_id, 
+        content, 
+        comments: [] 
+      });
+    }
+  );
+});
+
+// Create a new comment (or reply)
+app.post('/api/posts/:postId/comments', (req, res) => {
+  const postId = req.params.postId;
+  const { user_id, content, parent_comment_id = null } = req.body;
+
+  db.run(
+    `INSERT INTO comments (post_id, user_id, content, parent_comment_id) VALUES (?, ?, ?, ?)`,
+    [postId, user_id, content, parent_comment_id],
+    function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({
+        id: this.lastID,
+        post_id: postId,
+        user_id,
+        content,
+        parent_comment_id
+      });
+    }
+  );
+});
+
+
+
 
 // Assignments Routes
 // Create assignment (with optional file upload)

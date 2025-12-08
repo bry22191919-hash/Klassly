@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { v4 as uuidv4 } from 'uuid';
+import { useNavigate } from "react-router-dom";
 
 const CreateClass = () => {
     const [name, setClassName] = useState('');
     const [subject, setSubject] = useState('');
+    const navigate = useNavigate();
 
     // use either 'userId' or legacy 'id'
     const storedId = localStorage.getItem("userId") ?? localStorage.getItem("id");
@@ -31,7 +33,7 @@ const CreateClass = () => {
             await axios.post("http://localhost:3001/api/create-classes", {
                 name,
                 subject,
-                teacher_id, // already Number or null
+                teacher_id,
                 class_code
             });
 
@@ -73,6 +75,9 @@ const CreateClass = () => {
                     </button>
                 </div>
             </form>
+            <button type="button" onClick={() => navigate('/dashboard')}>
+                Back to Dashboard
+            </button>
         </div>
     );
 }
