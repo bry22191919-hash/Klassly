@@ -5,6 +5,7 @@ const ClassCard = ({ classData }) => {
   const navigate = useNavigate();
 
   const openClass = () => navigate(`/class/${classData.id}`);
+  
   const handleKeyDown = (e) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
