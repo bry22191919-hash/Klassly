@@ -36,15 +36,16 @@ db.serialize(() => {
         )`);
 
     db.run(`
-        CREATE TABLE IF NOT EXISTS submission(
+    CREATE TABLE IF NOT EXISTS submission (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        assignment_id INTEGER,
-        student_id INTEGER,
+        assignment_id INTEGER NOT NULL,
+        student_id INTEGER NOT NULL,
         file_path TEXT,
-        status TEXT,
-        FOREIGN KEY (student_id) REFERENCES users(id),
-        FOREIGN KEY (assignment_id) REFERENCES assignments(id)
-        )`);
+        status TEXT DEFAULT 'submitted',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (assignment_id) REFERENCES assignments(id),
+        FOREIGN KEY (student_id) REFERENCES users(id)
+    )`);
 
     db.run(`
         CREATE TABLE IF NOT EXISTS post(

@@ -55,6 +55,10 @@ const JoinClass = () => {
       </form>
 
       {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
+
+      <button type="button" onClick={() => navigate('/dashboard')}>
+        Back to Dashboard
+      </button>
     </div>
   );
 };
