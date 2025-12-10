@@ -9,6 +9,17 @@ const AssignmentsContainer = ({ classId, user }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
 
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "No due date";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   // Load assignments
   const fetchAssignments = async () => {
     try {
@@ -27,7 +38,7 @@ const AssignmentsContainer = ({ classId, user }) => {
     fetchAssignments();
   }, [classId]);
 
-  const openAssignment = (a) => setSelectedAssignment(a);
+  const openAssignment = (assignment) => setSelectedAssignment(assignment);
 
   if (loading) return <p>Loading assignments...</p>;
 
@@ -55,9 +66,9 @@ const AssignmentsContainer = ({ classId, user }) => {
         <p>No assignments yet.</p>
       ) : (
         <div>
-          {assignments.map((a) => (
+          {assignments.map((assignment) => (
             <div
-              key={a.id}
+              key={assignment.id}
               style={{
                 padding: "12px",
                 border: "1px solid #ddd",
@@ -66,12 +77,12 @@ const AssignmentsContainer = ({ classId, user }) => {
                 cursor: "pointer",
                 background: "#fafafa",
               }}
-              onClick={() => openAssignment(a)}
+              onClick={() => openAssignment(assignment)}
             >
-              <h3>{a.title}</h3>
-              <p>{a.description}</p>
+              <h3>{assignment.title}</h3>
+              <p>{assignment.description}</p>
               <p>
-                <strong>Due:</strong> {a.due_date}
+                <strong>Due:</strong> {formatDate(assignment.due_date)}
               </p>
             </div>
           ))}
@@ -87,7 +98,7 @@ const AssignmentsContainer = ({ classId, user }) => {
         />
       )}
 
-      {/* Assignment Detail Modal (submissions etc.) */}
+      {/* Assignment Detail Modal */}
       {selectedAssignment && (
         <AssignmentModal
           assignment={selectedAssignment}
