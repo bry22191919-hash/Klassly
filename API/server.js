@@ -119,6 +119,7 @@ app.post("/api/join-class", (req, res) => {
   });
 });
 
+// Class page
 app.get('/api/class/:id', (req, res) => {
   const classId = req.params.id;
   db.get(`SELECT c.*, u.name as teacher_name FROM classes c LEFT JOIN users u ON c.teacher_id = u.id WHERE c.id = ?`,
@@ -133,6 +134,7 @@ app.get('/api/class/:id', (req, res) => {
   );
 });
 
+// Class members list
 app.get('/api/class/:id/members', (req, res) => {
   const classId = req.params.id;
   db.all(`SELECT u.id AS user_id, u.name FROM class_students cs LEFT JOIN users u ON cs.student_id = u.id WHERE cs.class_id = ?`,
