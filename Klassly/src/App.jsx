@@ -7,6 +7,7 @@ import Dashboard from './Pages/Dashboard.jsx'
 import CreateClass from './Pages/CreateClass.jsx'
 import JoinClass from './Pages/JoinClass.jsx'
 import ClassPage from './Pages/ClassPage.jsx'
+import VerifyEmail from './Pages/VerufyEmail.jsx'
 
 
 
@@ -22,6 +23,7 @@ function App() {
       <Route path="/create-class" element={<CreateClass/>}/>
       <Route path="/join-class" element={<JoinClass/>}/>
       <Route path="/class/:id" element={<ClassPage />} />
+      <Route path="/verify/:token" element={<VerifyEmail />} />
     </Routes>
    </Router>
   )

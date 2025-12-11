@@ -26,31 +26,52 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// --------- AUTH ----------
+//Authentication part
 app.post("/api/register", (req, res) => {
   const { name, email, password, role } = req.body;
-  if (!name || !email || !password || !role) return res.status(400).send('Fill out all requirements');
+
+  if (!name || !email || !password || !role)
+    return res.status(400).json({ error: "Fill out all requirements" });
+
+  //8 letters min with 1 capital and 1 number
+  const passwordRules = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+  if (!passwordRules.test(password)) {
+    return res.status(400).json({
+      error: "Password must be at least 8 characters, include one capital letter and one number."
+    });
+  }
 
   const hashed = bcrypt.hashSync(password, 10);
-  db.run(`INSERT INTO users (name,email,password,role) VALUES (?,?,?,?)`, [name, email, hashed, role], function(err) {
-    if (err) return res.status(400).json({ error: "Email already exists" });
-    res.json({ message: "User registered", user_id: this.lastID });
-  });
+
+  db.run(
+    `INSERT INTO users (name,email,password,role) VALUES (?,?,?,?)`,
+    [name, email, hashed, role],
+    function (err) {
+      if (err) return res.status(400).json({ error: "Email already exists" });
+      res.json({ message: "User registered", user_id: this.lastID });
+    }
+  );
 });
+
 
 app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
   db.get(`SELECT * FROM users WHERE email = ?`, [email], (err, user) => {
-    if (err) return res.status(500).json({ error: "Internal server error" });
-    if (!user) return res.status(400).json({ error: "User not found" });
-    if (!bcrypt.compareSync(password, user.password)) return res.status(400).json({ error: "Wrong password" });
+    if (err) 
+      return res.status(500).json({ error: "Internal server error" });
+    if (!user) 
+      return res.status(400).json({ error: "User not found" });
+    if (!bcrypt.compareSync(password, user.password)) 
+      return res.status(400).json({ error: "Wrong password" });
     res.json({ message: "Login success", user });
   });
 });
 
-// --------- CLASSES ----------
+// Dashboard o home
 app.get("/api/dashboard/:userId", (req, res) => {
   const userId = req.params.userId;
+
   const query = `
     SELECT c.id, c.name, c.subject, c.teacher_id, c.class_code, u.name AS teacher_name
     FROM classes c
@@ -58,31 +79,41 @@ app.get("/api/dashboard/:userId", (req, res) => {
     WHERE c.teacher_id = ? OR c.id IN (SELECT class_id FROM class_students WHERE student_id = ?)
   `;
   db.all(query, [userId, userId], (err, rows) => {
-    if (err) return res.status(400).json({ error: err.message });
+    if (err) 
+      return res.status(400).json({ error: err.message });
     res.json(rows || []);
   });
 });
 
+//creation of class for teachers
 app.post("/api/create-classes", (req, res) => {
   const { name, subject, teacher_id, class_code } = req.body;
-  db.run(`INSERT INTO classes (name, subject, teacher_id, class_code) VALUES (?,?,?,?)`,
-    [name, subject, teacher_id, class_code],
+
+  db.run(`INSERT INTO classes (name, subject, teacher_id, class_code) VALUES (?,?,?,?)`, [name, subject, teacher_id, class_code],
     function(err) {
-      if (err) return res.status(400).json({ error: "Something went wrong." });
+      if (err) 
+        return res.status(400).json({ error: "Something went wrong." });
+
       res.json({ message: "Class created", class_id: this.lastID });
     }
   );
 });
 
+//join class for students
 app.post("/api/join-class", (req, res) => {
   const { class_code: rawClassCode, student_id } = req.body;
   const class_code = rawClassCode.trim();
+
   db.get(`SELECT * FROM classes WHERE UPPER(class_code) = UPPER(?)`, [class_code], (err, code) => {
-    if (err) return res.status(500).json({ error: "Internal server error" });
-    if (!code) return res.status(400).json({ error: "Class Code ERROR!" });
+    if (err) 
+      return res.status(500).json({ error: "Internal server error" });
+    if (!code) 
+      return res.status(400).json({ error: "Class Code ERROR!" });
 
     db.run(`INSERT INTO class_students (class_id, student_id) VALUES (?,?)`, [code.id, student_id], function(err) {
-      if (err) return res.status(400).json({ error: "Already joined or error occurred" });
+      if (err) 
+        return res.status(400).json({ error: "Already joined or error occurred" });
+
       res.json({ message: "Successfully joined class", class: code });
     });
   });
@@ -93,8 +124,10 @@ app.get('/api/class/:id', (req, res) => {
   db.get(`SELECT c.*, u.name as teacher_name FROM classes c LEFT JOIN users u ON c.teacher_id = u.id WHERE c.id = ?`,
     [classId],
     (err, classInfo) => {
-      if (err) return res.status(500).json({ error: "Database error" });
-      if (!classInfo) return res.status(404).json({ error: "Class not found" });
+      if (err) 
+        return res.status(500).json({ error: "Database error" });
+      if (!classInfo) 
+        return res.status(404).json({ error: "Class not found" });
       res.json(classInfo);
     }
   );
@@ -189,7 +222,7 @@ app.post('/api/class/:classId/assignments', upload.single('file'), (req, res) =>
 app.get('/api/class/:id/assignments', (req, res) => {
   const classId = req.params.id;
   db.all(
-    `SELECT id, title, description, due_date AS dueDate, points, class_id AS classId, file_path AS filePath FROM assignments WHERE class_id=? ORDER BY id DESC`,
+    `SELECT id, title, description, due_date AS dueate, points, class_id AS classId, file_path AS filePath FROM assignments WHERE class_id=? ORDER BY id DESC`,
     [classId],
     (err, rows) => {
       if (err) return res.status(500).json({ error: 'Failed to fetch assignments' });

@@ -1,5 +1,5 @@
-import React, { useState } from "react"
-import { useNavigate, Link } from "react-router-dom"
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -10,19 +10,14 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
-
         try {
-            const response = await fetch('http://localhost:3001/api/login', {
+            const res = await fetch('http://localhost:3001/api/login', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
-
-            const data = await response.json();
-
-            if (response.ok) {
+            const data = await res.json();
+            if (res.ok) {
                 localStorage.setItem('id', data.user.id);
                 localStorage.setItem('role', data.user.role);
                 navigate('/dashboard');
@@ -40,26 +35,12 @@ const Login = () => {
                 <h2 className="center-block">Log In</h2>
                 <form onSubmit={handleLogin}>
                     <label>Email</label>
-                    <input
-                        type="text"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                    
+                    <input type="text" value={email} onChange={e => setEmail(e.target.value)} required />
                     <label>Password</label>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required    
-                    />
-
+                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
                     <button className="user-btn" type="submit">Log In</button>
                 </form>
-
                 {error && <p style={{ color: 'red' }}>{error}</p>}
-
                 <Link to={"/signup"} className="linkSignUp">Sign Up</Link>
             </div>
         </div>

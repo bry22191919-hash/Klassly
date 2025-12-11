@@ -31,15 +31,13 @@ const CreateClass = () => {
 
         try {
             await axios.post("http://localhost:3001/api/create-classes", {
-                name,
-                subject,
-                teacher_id,
-                class_code
+                name, subject, teacher_id, class_code
             });
 
             alert(`Class created successfully! Class code: ${class_code}`);
             setClassName('');
             setSubject('');
+            
         } catch (err) {
             console.error(err);
             alert("Creation of class has failed.");
