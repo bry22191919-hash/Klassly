@@ -119,7 +119,7 @@ app.post("/api/join-class", (req, res) => {
   });
 });
 
-// Class page
+// Class Component
 app.get('/api/class/:id', (req, res) => {
   const classId = req.params.id;
   db.get(`SELECT c.*, u.name as teacher_name FROM classes c LEFT JOIN users u ON c.teacher_id = u.id WHERE c.id = ?`,
@@ -134,7 +134,7 @@ app.get('/api/class/:id', (req, res) => {
   );
 });
 
-// Class members list
+// Class Members  
 app.get('/api/class/:id/members', (req, res) => {
   const classId = req.params.id;
   db.all(`SELECT u.id AS user_id, u.name FROM class_students cs LEFT JOIN users u ON cs.student_id = u.id WHERE cs.class_id = ?`,
@@ -146,7 +146,7 @@ app.get('/api/class/:id/members', (req, res) => {
   );
 });
 
-// --------- POSTS / COMMENTS ----------
+// POSTS / COMMENTS
 app.get('/api/class/:id/posts', (req, res) => {
   const classId = req.params.id;
   const query = `
@@ -224,7 +224,7 @@ app.post('/api/class/:classId/assignments', upload.single('file'), (req, res) =>
 app.get('/api/class/:id/assignments', (req, res) => {
   const classId = req.params.id;
   db.all(
-    `SELECT id, title, description, due_date AS dueate, points, class_id AS classId, file_path AS filePath FROM assignments WHERE class_id=? ORDER BY id DESC`,
+    `SELECT id, title, description, due_date AS due_date, points, class_id AS classId, file_path AS filePath FROM assignments WHERE class_id=? ORDER BY id DESC`,
     [classId],
     (err, rows) => {
       if (err) return res.status(500).json({ error: 'Failed to fetch assignments' });
