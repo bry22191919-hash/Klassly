@@ -10,7 +10,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
 // Ensure uploads folder exists
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
@@ -26,8 +25,13 @@ const storage = multer.diskStorage({
   }
 });
 
-// Initialize multer
-const upload = multer({ storage });
+// Initialize multer with file size limit
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
 
 // Authentication Routes
 app.post("/api/register", (req, res) => {
@@ -67,7 +71,6 @@ app.post("/api/login", (req, res) => {
   });
 });
 
-
 //home
 app.get("/api/dashboard/:userId", (req, res) => {
   const userId = req.params.userId;
@@ -92,7 +95,6 @@ app.get("/api/dashboard/:userId", (req, res) => {
     res.json(rows || []);
   });
 });
-
 
 app.post("/api/create-classes", (req, res) => {
   const { name, subject, teacher_id, class_code } = req.body;
@@ -310,6 +312,96 @@ app.get('/api/assignments', (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch assignments' });
     }
     res.json(rows);
+  });
+});
+
+// Profile Routes
+app.get("/api/users/:id", (req, res) => {
+  const userId = req.params.id;
+  
+  db.get(`SELECT id, name, email, bio, profilePicture FROM users WHERE id = ?`, [userId], (err, user) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+    if (!user) return res.status(404).json({ error: "User not found" });
+    
+    // Don't send password in response
+    const { password, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+  });
+});
+
+// User Posts Route
+app.get("/api/users/:id/posts", (req, res) => {
+  const userId = req.params.id;
+  
+  const query = `
+    SELECT p.id, p.content, p.created_at, p.class_id, c.name as class_name
+    FROM post p
+    LEFT JOIN classes c ON p.class_id = c.id
+    WHERE p.user_id = ?
+    ORDER BY p.created_at DESC
+  `;
+  
+  db.all(query, [userId], (err, posts) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+    
+    res.json(posts || []);
+  });
+});
+
+// Profile Picture Upload Route
+app.post('/api/upload/profile', upload.single('profilePicture'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  
+  // Return the file path
+  res.json({ 
+    url: `/uploads/${req.file.filename}`,
+    filename: req.file.filename 
+  });
+});
+
+// Profile Update Route - FIXED: Properly handles file uploads
+app.put("/api/users/:id", upload.single('profilePicture'), (req, res) => {
+  const userId = req.params.id;
+  const { name, email, bio } = req.body;
+  
+  let profilePicture = req.body.profilePicture;
+  if (req.file) {
+    profilePicture = `/uploads/${req.file.filename}`;
+  }
+
+  const query = `UPDATE users SET name = ?, email = ?, bio = ?, profilePicture = ? WHERE id = ?`;
+  db.run(query, [name, email, bio, profilePicture, userId], function(err) {
+    if (err) {
+      console.error("SQLite Error:", err);
+      return res.status(400).json({ error: "Failed to update profile" });
+    }
+    console.log("Profile updated successfully");
+    res.json({ message: "Profile updated successfully" });
+  });
+});
+
+// Settings Routes
+app.put("/api/users/:id/settings", (req, res) => {
+  const userId = req.params.id;
+  const { notifications, privacy } = req.body;
+
+  // Update notifications and privacy settings in database
+  const query = `UPDATE users SET notifications = ?, privacy = ? WHERE id = ?`;
+  db.run(query, [JSON.stringify(notifications), JSON.stringify(privacy), userId], function(err) {
+    if (err) {
+      console.error("SQLite Error:", err);
+      return res.status(400).json({ error: "Failed to save settings" });
+    }
+    console.log("Settings saved successfully");
+    res.json({ message: "Settings saved successfully" });
   });
 });
 

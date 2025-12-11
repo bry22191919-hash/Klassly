@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-
+import '../App.css';
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -29,7 +29,7 @@ const Login = () => {
             } else {
                 setError(data.error || 'Invalid Email or Password');
             }
-        } catch (err) {
+        } catch {  // Removed the unused 'err' parameter
             setError('Server error. Please try again later.');
         }
     };

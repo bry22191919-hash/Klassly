@@ -104,4 +104,67 @@ db.serialize(() => {
     });
 });
 
-module.exports = db; 
+// Migration: ensure `bio`, `notifications`, `privacy`, and `profilePicture` columns exist on users table
+db.serialize(() => {
+    db.all("PRAGMA table_info(users)", [], (err, rows) => {
+        if (err) {
+            console.error('Error reading users table info:', err);
+            return;
+        }
+
+        const cols = rows.map(r => r.name);
+        
+        if (!cols.includes('bio')) {
+            db.run("ALTER TABLE users ADD COLUMN bio TEXT", (aErr) => {
+                if (aErr) console.error('Failed to add bio column to users:', aErr);
+                else console.log('Added bio column to users table');
+            });
+        }
+
+        if (!cols.includes('notifications')) {
+            db.run("ALTER TABLE users ADD COLUMN notifications TEXT", (aErr) => {
+                if (aErr) console.error('Failed to add notifications column to users:', aErr);
+                else console.log('Added notifications column to users table');
+            });
+        }
+
+        if (!cols.includes('privacy')) {
+            db.run("ALTER TABLE users ADD COLUMN privacy TEXT", (aErr) => {
+                if (aErr) console.error('Failed to add privacy column to users:', aErr);
+                else console.log('Added privacy column to users table');
+            });
+        }
+
+        if (!cols.includes('profilePicture')) {
+            db.run("ALTER TABLE users ADD COLUMN profilePicture TEXT", (aErr) => {
+                if (aErr) console.error('Failed to add profilePicture column to users:', aErr);
+                else console.log('Added profilePicture column to users table');
+            });
+        }
+    });
+});
+
+// Ensure profilePicture column has proper indexing for faster lookups
+db.serialize(() => {
+    db.all("PRAGMA index_list(users)", [], (err, indexes) => {
+        if (err) {
+            console.error('Error checking indexes:', err);
+            return;
+        }
+
+        const hasProfilePictureIndex = indexes.some(index => index.name === 'idx_users_profilePicture');
+        
+        if (!hasProfilePictureIndex) {
+            db.run("CREATE INDEX IF NOT EXISTS idx_users_profilePicture ON users(profilePicture)", (idxErr) => {
+                if (idxErr) {
+                    console.error('Failed to create profilePicture index:', idxErr);
+                } else {
+                    console.log('Created profilePicture index on users table');
+                }
+            });
+        }
+    });
+});
+
+// Add this export at the end:
+module.exports = db;
